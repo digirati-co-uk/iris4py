@@ -11,11 +11,12 @@ class IrisClient:
 
     def __init__(self):
 
-        self.IRIS_POLL_INTERVAL = 20
-        self.sns_client = boto3.client('sns', iris_settings.AWS_REGION)
-        self.sqs = boto3.resource('sqs', iris_settings.AWS_REGION)
         self.iris_queue = None
         self.iris_topic = None
+
+        if not iris_settings.IRIS_BYPASS:
+            self.sns_client = boto3.client('sns', iris_settings.AWS_REGION)
+            self.sqs = boto3.resource('sqs', iris_settings.AWS_REGION)
 
     def get_queue(self):
         if self.iris_queue is None:
@@ -34,6 +35,9 @@ class IrisClient:
 
     def send_iris_message(self, message):
 
+        if iris_settings.IRIS_BYPASS:
+            logging.info("Send message bypassed")
+            return
         message['timestamp'] = time.time()
         response = self.sns_client.publish(
             TopicArn=self.get_topic(),
@@ -43,6 +47,9 @@ class IrisClient:
         return response.get('MessageId')
 
     def read_iris_messages(self, count=5):
+
+        if iris_settings.IRIS_BYPASS:
+            return None
 
         messages = self.get_queue().receive_messages(WaitTimeSeconds=iris_settings.IRIS_POLL_INTERVAL,
                                                      MaxNumberOfMessages=count)
@@ -72,6 +79,11 @@ class IrisListener:
 
         try:
             while not self.stop:
+
+                if iris_settings.IRIS_BYPASS:
+                    time.sleep(iris_settings.IRIS_POLL_INTERVAL)
+                    continue
+
                 for message in self.iris.read_iris_messages():
                     if message is not None:
                         # noinspection PyBroadException
