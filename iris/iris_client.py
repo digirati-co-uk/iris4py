@@ -38,7 +38,7 @@ class IrisClient:
         if iris_settings.IRIS_BYPASS:
             logging.info("Send message bypassed")
             return
-        message['timestamp'] = time.time()
+        message['timestamp'] = int(round(time.time() * 1000))
         response = self.sns_client.publish(
             TopicArn=self.get_topic(),
             Message=json.dumps(message)
