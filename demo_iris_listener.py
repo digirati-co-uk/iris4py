@@ -1,4 +1,4 @@
-import iris_client
+from iris import iris_client
 import json
 
 
@@ -8,4 +8,4 @@ def print_message(message):
 
 
 listener = iris_client.IrisListener()
-listener.run(print_message, None)
+listener.run(print_message)

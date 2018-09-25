@@ -1,4 +1,4 @@
-import iris_client
+from iris import iris_client
 
 iris = iris_client.IrisClient()
 

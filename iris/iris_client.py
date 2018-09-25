@@ -9,23 +9,24 @@ from collections import OrderedDict
 
 class IrisClient:
 
-    def __init__(self):
+    def __init__(self, settings=iris_settings):
 
         self.iris_queue = None
         self.iris_topic = None
+        self.settings = settings
 
-        if not iris_settings.IRIS_BYPASS:
-            self.sns_client = boto3.client('sns', iris_settings.AWS_REGION)
-            self.sqs = boto3.resource('sqs', iris_settings.AWS_REGION)
+        if not self.settings.IRIS_BYPASS:
+            self.sns_client = boto3.client('sns', self.settings.AWS_REGION)
+            self.sqs = boto3.resource('sqs', self.settings.AWS_REGION)
 
     def get_queue(self):
         if self.iris_queue is None:
-            self.iris_queue = self.sqs.get_queue_by_name(QueueName=iris_settings.IRIS_SQS_APP_QUEUE)
+            self.iris_queue = self.sqs.get_queue_by_name(QueueName=self.settings.IRIS_SQS_APP_QUEUE)
         return self.iris_queue
 
     def get_topic(self):
         if self.iris_topic is None:
-            self.iris_topic = self.sns_client.create_topic(Name=iris_settings.IRIS_SNS_TOPIC).get('TopicArn')
+            self.iris_topic = self.sns_client.create_topic(Name=self.settings.IRIS_SNS_TOPIC).get('TopicArn')
         return self.iris_topic
 
     @staticmethod
@@ -35,7 +36,7 @@ class IrisClient:
 
     def send_iris_message(self, message):
 
-        if iris_settings.IRIS_BYPASS:
+        if self.settings.IRIS_BYPASS:
             logging.info("Send message bypassed")
             return
         message['timestamp'] = int(round(time.time() * 1000))
@@ -48,10 +49,10 @@ class IrisClient:
 
     def read_iris_messages(self, count=5):
 
-        if iris_settings.IRIS_BYPASS:
+        if self.settings.IRIS_BYPASS:
             return None
 
-        messages = self.get_queue().receive_messages(WaitTimeSeconds=iris_settings.IRIS_POLL_INTERVAL,
+        messages = self.get_queue().receive_messages(WaitTimeSeconds=self.settings.IRIS_POLL_INTERVAL,
                                                      MaxNumberOfMessages=count)
         unwrapped_messages = []
         for message in messages:
@@ -69,19 +70,20 @@ class IrisClient:
 
 class IrisListener:
 
-    def __init__(self):
+    def __init__(self, settings=iris_settings):
 
         self.set_logging()
-        self.iris = IrisClient()
+        self.iris = IrisClient(settings=settings)
         self.stop = False
+        self.settings = settings
 
     def run(self, callback, message_filter=None):
 
         try:
             while not self.stop:
 
-                if iris_settings.IRIS_BYPASS:
-                    time.sleep(iris_settings.IRIS_POLL_INTERVAL)
+                if self.settings.IRIS_BYPASS:
+                    time.sleep(self.settings.IRIS_POLL_INTERVAL)
                     continue
 
                 for message in self.iris.read_iris_messages():
