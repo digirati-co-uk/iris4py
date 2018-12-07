@@ -9,9 +9,7 @@ setup(name='iris-core',
       packages=['iris',],
       license='MIT',
       install_requires=[
-          'boto3',
-          'pytest',
-          'moto'
+          'boto3'
       ],
       classifiers=[
           'Development Status :: 3 - Alpha',
