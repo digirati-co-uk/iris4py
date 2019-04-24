@@ -1,14 +1,15 @@
 #!/usr/bin/env python
 
 from distutils.core import setup
+import setuptools
 
-setup(name='iris-core',
+setup(name='irispyc',
       version='0.1',
       description='Iris message bus',
       author="John Root",
       author_email="john.root@digirati.com",
       url='https://github.com/digirati-co-uk/iris4py',
-      packages=['iris',],
+      packages=setuptools.find_packages(),
       license='MIT',
       install_requires=[
           'boto3'
